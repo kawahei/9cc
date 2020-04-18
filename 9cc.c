@@ -21,11 +21,17 @@ struct Token {
 };
 
 Token *token;
+char *user_input;
 
-void error(char *fmt, ...) {
+void error_at(char *loc, char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+
+	int pos = loc - user_input;
+	fprintf(stderr, "%s\n", user_input);
+	fprintf(stderr, "%*s", pos, "");
+	fprintf(stderr, "^ ");
+	fprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	exit(1);
 }
@@ -39,13 +45,13 @@ bool consume(char op) {
 
 void expect(char op) {
 	if(token->kind != TK_RESERVED || token->str[0] != op)
-		error("It is not '%c'", op);
+		error_at(token->str, "It is not '%c'", op);
 	token=token->next;
 }
 
 int expect_number() {
 	if (token->kind != TK_NUM) 
-		error("It is not a number");
+		error_at(token->str, "It is not a number");
 	int val = token->val;
 	token=token->next;
 	return val;
@@ -85,7 +91,7 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-		error("tokenizer can not tokenize this string");
+		error_at(token->str, "tokenizer can not tokenize this string");
 	}
 
 	new_token(TK_EOF, cur, p);
@@ -98,7 +104,7 @@ int main( int argc, char **argv) {
 		fprintf(stderr, "Wrong number of arguments.\n");
 		return 1;
 	}
-
+	user_input = argv[1];
 	token = tokenize(argv[1]);
 
 	printf("	.arch armv8-a\n");
